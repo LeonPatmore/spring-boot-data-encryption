@@ -19,15 +19,19 @@ class EncryptionInterceptor(private val encryptionService: EncryptionService) : 
         val kClass = entity::class
         for (prop in kClass.memberProperties) {
             val annotation = prop.javaField?.getAnnotation(Encrypted::class.java) ?: continue
-            val targetField = annotation.targetField
+            val targetField = annotation.encryptedFieldName
+            if (targetField.isEmpty()) {
+                throw Exception("Target field required")
+            }
 
-            val targetProp = kClass.memberProperties.find { it.name == targetField } ?: continue
-            val targetValue = (targetProp.getter.call(entity) as? String) ?: continue
+            val targetValue = (prop.getter.call(entity) as? String) ?: continue
 
-            val index = propertyNames.indexOf(prop.name)
-            if (index >= 0) {
+            val targetIndex = propertyNames.indexOf(targetField)
+            if (targetIndex >= 0) {
                 println("Updating state for name ${prop.name}")
-                state[index] = encryptionService.encrypt(targetValue.toByteArray())
+                state[targetIndex] = encryptionService.encrypt(targetValue.toByteArray())
+            } else {
+                throw Exception("Target field does not exist in entity")
             }
         }
 
@@ -46,23 +50,21 @@ class EncryptionInterceptor(private val encryptionService: EncryptionService) : 
 
         for (prop in kClass.memberProperties) {
             val annotation = prop.javaField?.getAnnotation(Encrypted::class.java) ?: continue
-            val targetField = annotation.targetField
+            val targetField = annotation.encryptedFieldName
 
-            val index = propertyNames.indexOf(prop.name)
-            if (index >= 0) {
-                val encryptedData = state[index] as? ByteArray ?: continue
+            val encryptedIndex = propertyNames.indexOf(targetField)
+            if (encryptedIndex >= 0) {
+                val encryptedData = state[encryptedIndex] as? ByteArray ?: continue
                 val decrypted = String(encryptionService.decrypt(encryptedData))
 
-                // Find the target property and set the decrypted value
-                val targetProp = kClass.memberProperties.find { it.name == targetField } ?: continue
-                targetProp.javaField?.let { field ->
+                prop.javaField?.let { field ->
                     field.isAccessible = true
                     field.set(entity, decrypted)
                     modified = true
 
-                    val targetPropIndex = propertyNames.indexOf(targetProp.name)
-                    if (targetPropIndex >= 0) {
-                        state[targetPropIndex] = decrypted
+                    val plaintextIndex = propertyNames.indexOf(prop.name)
+                    if (plaintextIndex >= 0) {
+                        state[plaintextIndex] = decrypted
                     }
                 }
             }

@@ -8,8 +8,8 @@ import com.amazonaws.encryptionsdk.model.EncryptionMaterialsRequest
 import io.micrometer.core.instrument.MeterRegistry
 
 class ObservedCryptoMaterialsManager(
-    val meterRegistry: MeterRegistry,
-    val delegate: CryptoMaterialsManager,
+    private val meterRegistry: MeterRegistry,
+    private val delegate: CryptoMaterialsManager,
 ) : CryptoMaterialsManager {
     override fun getMaterialsForEncrypt(request: EncryptionMaterialsRequest?): EncryptionMaterials {
         meterRegistry.counter("encryption_requests_total").increment()

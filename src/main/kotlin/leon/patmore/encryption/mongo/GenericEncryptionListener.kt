@@ -17,14 +17,14 @@ class GenericEncryptionListener(
 ) {
 
     @EventListener
-    fun onBeforeConvert(event: BeforeSaveEvent<Any>) {
+    fun beforeSave(event: BeforeSaveEvent<Any>) {
         if (event.document != null) {
             encryptFields(event.document!!, event.source)
         }
     }
 
     @EventListener
-    fun onAfterLoad(event: AfterLoadEvent<Any>) {
+    fun afterLoad(event: AfterLoadEvent<Any>) {
         if (event.document != null) {
             decryptFields(event.document!!, event.type)
         }
@@ -33,10 +33,10 @@ class GenericEncryptionListener(
     private fun encryptFields(document: Document, entity: Any) {
         for (prop in entity::class.memberProperties) {
             val annotation = prop.javaField?.getAnnotation(Encrypted::class.java) ?: continue
-            val targetField = annotation.targetField.ifEmpty { prop.name }
-            val targetProp = entity::class.memberProperties.find { it.name == targetField } ?: continue
 
-            val targetValue = (targetProp.getter.call(entity) as? String) ?: continue
+            val targetField = annotation.encryptedFieldName.ifEmpty { prop.name }
+
+            val targetValue = (prop.getter.call(entity) as? String) ?: continue
 
             val ciphertext = encryptionService.encrypt(targetValue.toByteArray())
 
@@ -48,12 +48,12 @@ class GenericEncryptionListener(
         val kClass = entity.kotlin
         for (prop in kClass.memberProperties) {
             val annotation = prop.javaField?.getAnnotation(Encrypted::class.java) ?: continue
-            val targetField = annotation.targetField.ifEmpty { prop.name }
+            val targetField = annotation.encryptedFieldName.ifEmpty { prop.name }
 
-            val encryptedValue = (document[prop.name] as Binary).data ?: continue
+            val encryptedValue = (document[targetField] as? Binary)?.data ?: continue
             val decrypted = String(encryptionService.decrypt(encryptedValue))
 
-            document[targetField] = decrypted
+            document[prop.name] = decrypted
         }
     }
 }
