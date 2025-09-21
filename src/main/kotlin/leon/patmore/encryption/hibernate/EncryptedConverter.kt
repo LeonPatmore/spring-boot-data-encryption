@@ -1,4 +1,4 @@
-package leon.patmore.encryption
+package leon.patmore.encryption.hibernate
 
 // class EncryptedConverter : AttributeConverter<Any, ByteArray> {
 //    private val encryptionService = EncryptionService(AwsCryptoProvider.awsCrypto, AwsCryptoProvider.cmm)

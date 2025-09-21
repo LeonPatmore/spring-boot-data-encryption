@@ -9,7 +9,6 @@ import com.amazonaws.encryptionsdk.caching.CryptoMaterialsCache
 import com.amazonaws.encryptionsdk.caching.LocalCryptoMaterialsCache
 import com.amazonaws.encryptionsdk.kmssdkv2.KmsMasterKeyProvider
 import io.micrometer.core.instrument.MeterRegistry
-import org.springframework.boot.autoconfigure.orm.jpa.HibernatePropertiesCustomizer
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import software.amazon.awssdk.regions.Region
@@ -49,20 +48,5 @@ class EncryptionConfig {
             .withMaxAge(5, TimeUnit.SECONDS)
             .withMessageUseLimit(5)
             .build()
-    }
-
-    @Bean
-    fun encryptionInterceptor(encryptionService: EncryptionService): EncryptionInterceptor {
-        return EncryptionInterceptor(encryptionService)
-    }
-
-    @Bean
-    fun hibernatePropertiesCustomizer(interceptor: EncryptionInterceptor): HibernatePropertiesCustomizer {
-        return HibernatePropertiesCustomizer { props: MutableMap<String?, Any?>? ->
-            props!!.put(
-                "hibernate.session_factory.interceptor",
-                interceptor,
-            )
-        }
     }
 }

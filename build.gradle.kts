@@ -25,8 +25,11 @@ dependencies {
     implementation("org.jetbrains.kotlin:kotlin-reflect")
     implementation("com.amazonaws:aws-encryption-sdk-java:3.0.2")
     implementation("io.micrometer:micrometer-core")
+
     implementation("org.springframework.boot:spring-boot-starter-actuator")
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
+
+    implementation("org.springframework.boot:spring-boot-starter-data-mongodb")
     // implementation("software.amazon.awssdk:kms:2.20.0")
 
     runtimeOnly("org.postgresql:postgresql")

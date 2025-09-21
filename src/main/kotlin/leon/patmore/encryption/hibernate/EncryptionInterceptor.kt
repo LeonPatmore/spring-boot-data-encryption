@@ -1,5 +1,7 @@
-package leon.patmore.encryption
+package leon.patmore.encryption.hibernate
 
+import leon.patmore.encryption.Encrypted
+import leon.patmore.encryption.EncryptionService
 import org.hibernate.Interceptor
 import org.hibernate.type.Type
 import kotlin.reflect.full.memberProperties
@@ -24,6 +26,7 @@ class EncryptionInterceptor(private val encryptionService: EncryptionService) : 
 
             val index = propertyNames.indexOf(prop.name)
             if (index >= 0) {
+                println("Updating state for name ${prop.name}")
                 state[index] = encryptionService.encrypt(targetValue.toByteArray())
             }
         }
@@ -56,6 +59,11 @@ class EncryptionInterceptor(private val encryptionService: EncryptionService) : 
                     field.isAccessible = true
                     field.set(entity, decrypted)
                     modified = true
+
+                    val targetPropIndex = propertyNames.indexOf(targetProp.name)
+                    if (targetPropIndex >= 0) {
+                        state[targetPropIndex] = decrypted
+                    }
                 }
             }
         }
