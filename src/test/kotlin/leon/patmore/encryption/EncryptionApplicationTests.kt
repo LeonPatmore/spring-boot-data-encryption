@@ -2,8 +2,10 @@ package leon.patmore.encryption
 
 import leon.patmore.encryption.hibernate.User
 import leon.patmore.encryption.hibernate.UserRepository
+import leon.patmore.encryption.mongo.Address
 import leon.patmore.encryption.mongo.Card
 import leon.patmore.encryption.mongo.CardRepository
+import leon.patmore.encryption.mongo.Pin
 import org.bson.types.ObjectId
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
@@ -45,7 +47,14 @@ class EncryptionApplicationTests {
 
     @Test
     fun `test mongo`() {
-        val card = mongoRepository.save(Card("124321", "someValue"))
+        val card = mongoRepository.save(
+            Card(
+                "124321",
+                existingPii = "someValue",
+                address = Address("123", listOf("1", "2")),
+                pins = listOf(Pin("1234", true), Pin("4567", false)),
+            ),
+        )
 
         val card1 = mongoRepository.findById(card.id!!).get()
         assertEquals(card.number, card1.number)
