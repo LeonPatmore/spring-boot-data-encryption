@@ -11,11 +11,42 @@ A comprehensive Spring Boot library that provides transparent field-level encryp
 - **Metrics Support**: Built-in Micrometer metrics for encryption operations
 - **Nested Object Support**: Supports encryption in nested objects and collections
 
-## Configuration
+## Setup Requirements
 
-### 1. Application Properties
+**Important**: This library requires you to configure a `KmsMasterKeyProvider` bean in your application for the encryption to work. The library provides the encryption infrastructure but does not include the AWS KMS configuration.
 
-Example application properties:
+### Required Bean Configuration
+
+You must provide a `KmsMasterKeyProvider` bean in your application configuration:
+
+```kotlin
+@Configuration
+class YourEncryptionConfig {
+    
+    @Bean
+    fun kmsMasterKeyProvider(): KmsMasterKeyProvider {
+        return KmsMasterKeyProvider.builder()
+            .defaultRegion(Region.US_EAST_1) // Your preferred region
+            .buildStrict("arn:aws:kms:us-east-1:123456789012:key/your-key-id")
+    }
+}
+```
+
+**Configuration Requirements:**
+- Replace the KMS key ARN with your actual AWS KMS key
+- Set the appropriate AWS region for your key
+- Ensure your application has the necessary AWS permissions to use the KMS key
+- The key must be configured for encryption/decryption operations
+
+**AWS Permissions Required:**
+- `kms:Encrypt`
+- `kms:Decrypt`
+- `kms:GenerateDataKey`
+- `kms:DescribeKey`
+
+### Database Configuration
+
+Configure your database connections in your `application.yml` or `application.properties`:
 
 ```yaml
 spring:
@@ -39,19 +70,6 @@ spring:
       database: myappdb
       host: localhost
       port: 27017
-```
-
-### 2. AWS KMS Configuration
-
-The library is configured to use a specific AWS KMS key in the EU West 1 region:
-
-```kotlin
-@Bean
-fun kmsMasterKeyProvider(): KmsMasterKeyProvider {
-    return KmsMasterKeyProvider.builder()
-        .defaultRegion(Region.EU_WEST_1)
-        .buildStrict("arn:aws:kms:eu-west-1:136306849848:key/b74e3f6d-67c8-425a-a4de-2d9b1524dee4")
-}
 ```
 
 ## Usage

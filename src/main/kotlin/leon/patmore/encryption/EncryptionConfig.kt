@@ -7,22 +7,13 @@ import com.amazonaws.encryptionsdk.DefaultCryptoMaterialsManager
 import com.amazonaws.encryptionsdk.caching.CachingCryptoMaterialsManager
 import com.amazonaws.encryptionsdk.caching.CryptoMaterialsCache
 import com.amazonaws.encryptionsdk.caching.LocalCryptoMaterialsCache
-import com.amazonaws.encryptionsdk.kmssdkv2.KmsMasterKeyProvider
 import io.micrometer.core.instrument.MeterRegistry
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
-import software.amazon.awssdk.regions.Region
 import java.util.concurrent.TimeUnit
 
 @Configuration
 class EncryptionConfig {
-
-    @Bean
-    fun kmsMasterKeyProvider(): KmsMasterKeyProvider {
-        return KmsMasterKeyProvider.builder()
-            .defaultRegion(Region.EU_WEST_1)
-            .buildStrict("arn:aws:kms:eu-west-1:136306849848:key/b74e3f6d-67c8-425a-a4de-2d9b1524dee4")
-    }
 
     @Bean
     fun awsCrypto(): AwsCrypto = AwsCrypto.builder()
