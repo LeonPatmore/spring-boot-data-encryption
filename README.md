@@ -226,4 +226,3 @@ fun `test mongo`() {
 
 - Lazy decryption of fields is not supported
 - MongoDB field renaming support is planned but not yet implemented
-- Direct encryption of Document or List objects is not supported in MongoDB
