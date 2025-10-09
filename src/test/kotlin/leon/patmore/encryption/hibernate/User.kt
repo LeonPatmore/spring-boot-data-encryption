@@ -2,6 +2,7 @@ package leon.patmore.encryption.hibernate
 
 import jakarta.persistence.Entity
 import jakarta.persistence.Table
+import jakarta.persistence.Transient
 import leon.patmore.encryption.Encrypted
 import org.springframework.data.jpa.domain.AbstractPersistable
 

@@ -20,30 +20,50 @@ class EncryptionInterceptor(
         entityName: String?,
         representationStrategy: EntityRepresentationStrategy?,
         id: Any,
-    ): Any = generateUserObject(id)
+    ): Any = generateProxyObject(entityName, id) { super.instantiate(entityName, representationStrategy, id) }
 
     override fun instantiate(
         entityName: String?,
         representationMode: RepresentationMode?,
         id: Any,
-    ): Any = generateUserObject(id)
+    ): Any = generateProxyObject(entityName, id) { super.instantiate(entityName, representationMode, id) }
 
-    private fun generateUserObject(id: Any): User {
+    private fun generateProxyObject(
+        entityName: String?,
+        id: Any,
+        defaultResponse: () -> Any,
+    ): Any {
+        if (entityName == null) {
+            return defaultResponse()
+        }
+
+        val entityClass =
+            try {
+                Class.forName(entityName)
+            } catch (e: ClassNotFoundException) {
+                return defaultResponse()
+            }
+
         val proxyClass =
             ByteBuddy()
-                .subclass(User::class.java)
+                .subclass(entityClass)
                 .method(ElementMatchers.isGetter())
                 .intercept(MethodDelegation.to(LazyDecryptInterceptor(encryptionService)))
                 .make()
-                .load(User::class.java.classLoader)
+                .load(entityClass.classLoader)
                 .loaded
 
-        val user = proxyClass.getDeclaredConstructor().newInstance()
-        val field = AbstractPersistable::class.java.getDeclaredField("id")
-        field.isAccessible = true
-        field.set(user, id)
+        val entity = proxyClass.getDeclaredConstructor().newInstance()
 
-        return user
+        try {
+            val field = AbstractPersistable::class.java.getDeclaredField("id")
+            field.isAccessible = true
+            field.set(entity, id)
+        } catch (e: NoSuchFieldException) {
+            println("id field not found on AbstractPersistable")
+        }
+
+        return entity
     }
 
     override fun onPersist(
