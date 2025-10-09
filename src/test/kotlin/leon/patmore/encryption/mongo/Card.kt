@@ -15,6 +15,12 @@ data class Card(
     @Id val id: ObjectId? = null,
 )
 
-data class Address(@Encrypted val postCode: String, val previousPostCodes: List<String> = emptyList())
+data class Address(
+    @Encrypted val postCode: String,
+    val previousPostCodes: List<String> = emptyList(),
+)
 
-data class Pin(@Encrypted val pin: String, val active: Boolean)
+data class Pin(
+    @Encrypted val pin: String,
+    val active: Boolean,
+)

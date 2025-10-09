@@ -2,12 +2,49 @@ package leon.patmore.encryption.hibernate
 
 import leon.patmore.encryption.Encrypted
 import leon.patmore.encryption.EncryptionService
+import net.bytebuddy.ByteBuddy
+import net.bytebuddy.implementation.MethodDelegation
+import net.bytebuddy.matcher.ElementMatchers
 import org.hibernate.Interceptor
+import org.hibernate.metamodel.RepresentationMode
+import org.hibernate.metamodel.spi.EntityRepresentationStrategy
 import org.hibernate.type.Type
+import org.springframework.data.jpa.domain.AbstractPersistable
 import kotlin.reflect.full.memberProperties
 import kotlin.reflect.jvm.javaField
 
-class EncryptionInterceptor(private val encryptionService: EncryptionService) : Interceptor {
+class EncryptionInterceptor(
+    private val encryptionService: EncryptionService,
+) : Interceptor {
+    override fun instantiate(
+        entityName: String?,
+        representationStrategy: EntityRepresentationStrategy?,
+        id: Any,
+    ): Any = generateUserObject(id)
+
+    override fun instantiate(
+        entityName: String?,
+        representationMode: RepresentationMode?,
+        id: Any,
+    ): Any = generateUserObject(id)
+
+    private fun generateUserObject(id: Any): User {
+        val proxyClass =
+            ByteBuddy()
+                .subclass(User::class.java)
+                .method(ElementMatchers.isGetter())
+                .intercept(MethodDelegation.to(LazyDecryptInterceptor(encryptionService)))
+                .make()
+                .load(User::class.java.classLoader)
+                .loaded
+
+        val user = proxyClass.getDeclaredConstructor().newInstance()
+        val field = AbstractPersistable::class.java.getDeclaredField("id")
+        field.isAccessible = true
+        field.set(user, id)
+
+        return user
+    }
 
     override fun onPersist(
         entity: Any,

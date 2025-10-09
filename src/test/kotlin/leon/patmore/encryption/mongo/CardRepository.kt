@@ -6,4 +6,6 @@ import org.springframework.data.repository.query.QueryByExampleExecutor
 import org.springframework.stereotype.Repository
 
 @Repository
-interface CardRepository : CrudRepository<Card, ObjectId>, QueryByExampleExecutor<Card>
+interface CardRepository :
+    CrudRepository<Card, ObjectId>,
+    QueryByExampleExecutor<Card>

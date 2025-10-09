@@ -7,7 +7,12 @@ import leon.patmore.encryption.mongo.Card
 import leon.patmore.encryption.mongo.CardRepository
 import leon.patmore.encryption.mongo.Pin
 import org.bson.types.ObjectId
+import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
+import org.mockito.kotlin.any
+import org.mockito.kotlin.never
+import org.mockito.kotlin.times
+import org.mockito.kotlin.verify
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.data.domain.Example
@@ -16,12 +21,11 @@ import org.springframework.data.mongodb.core.MongoTemplate
 import org.springframework.data.mongodb.core.query.Criteria
 import org.springframework.data.mongodb.core.query.Query
 import org.springframework.data.mongodb.core.query.Update
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean
 import java.util.UUID.randomUUID
-import kotlin.test.assertEquals
 
 @SpringBootTest
 class EncryptionApplicationTests {
-
     @Autowired
     private lateinit var repository: UserRepository
 
@@ -31,13 +35,26 @@ class EncryptionApplicationTests {
     @Autowired
     private lateinit var mongoTemplate: MongoTemplate
 
+    @MockitoSpyBean
+    private lateinit var encryptionService: EncryptionService
+
     @Test
     fun `test postgresql`() {
         val user = repository.save(User("Leon", "abc123"))
 
         val foundUser = repository.findById(user.id!!).get()
+        verify(
+            encryptionService,
+            never(),
+        ).decrypt(any())
+
         assertEquals(user.ssn, foundUser.ssn)
         assertEquals(user.firstName, foundUser.firstName)
+
+        verify(
+            encryptionService,
+            times(1),
+        ).decrypt(any())
     }
 
     @Test
@@ -47,14 +64,15 @@ class EncryptionApplicationTests {
 
     @Test
     fun `test mongo`() {
-        val card = mongoRepository.save(
-            Card(
-                "124321",
-                existingPii = "someValue",
-                address = Address("123", listOf("1", "2")),
-                pins = listOf(Pin("1234", true), Pin("4567", false)),
-            ),
-        )
+        val card =
+            mongoRepository.save(
+                Card(
+                    "124321",
+                    existingPii = "someValue",
+                    address = Address("123", listOf("1", "2")),
+                    pins = listOf(Pin("1234", true), Pin("4567", false)),
+                ),
+            )
 
         val card1 = mongoRepository.findById(card.id!!).get()
         assertEquals(card.number, card1.number)
@@ -84,7 +102,10 @@ class EncryptionApplicationTests {
         }
     }
 
-    private fun removeMongoField(id: ObjectId, fieldName: String) {
+    private fun removeMongoField(
+        id: ObjectId,
+        fieldName: String,
+    ) {
         val query = Query(Criteria.where("_id").`is`(id))
         val update = Update().unset(fieldName)
         mongoTemplate.updateFirst(query, update, "cards")
