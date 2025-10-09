@@ -7,6 +7,7 @@ import com.amazonaws.encryptionsdk.DefaultCryptoMaterialsManager
 import com.amazonaws.encryptionsdk.caching.CachingCryptoMaterialsManager
 import com.amazonaws.encryptionsdk.caching.CryptoMaterialsCache
 import com.amazonaws.encryptionsdk.caching.LocalCryptoMaterialsCache
+import com.amazonaws.encryptionsdk.kmssdkv2.KmsMasterKeyProvider
 import io.micrometer.core.instrument.MeterRegistry
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
