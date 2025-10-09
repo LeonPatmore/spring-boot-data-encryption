@@ -9,11 +9,7 @@ class EncryptionService(
     val awsCrypto: AwsCrypto,
     val materialsManager: CryptoMaterialsManager,
 ) {
-    fun encrypt(data: ByteArray): ByteArray {
-        return awsCrypto.encryptData(materialsManager, data).result
-    }
+    fun encrypt(data: ByteArray): ByteArray = awsCrypto.encryptData(materialsManager, data).result
 
-    fun decrypt(data: ByteArray): ByteArray {
-        return awsCrypto.decryptData(materialsManager, data).result
-    }
+    fun decrypt(data: ByteArray): ByteArray = awsCrypto.decryptData(materialsManager, data).result
 }

@@ -81,30 +81,37 @@ Use the `@Encrypted` annotation to mark fields that should be encrypted:
 ```kotlin
 @Target(AnnotationTarget.FIELD)
 @Retention(AnnotationRetention.RUNTIME)
-annotation class Encrypted(val encryptedFieldName: String = "")
+annotation class Encrypted(
+    val encryptedFieldName: String = "",
+    val lazy: Boolean = true,
+)
 ```
 
 ### 2. JPA/Hibernate Entities
 
-For PostgreSQL entities, use the `@Encrypted` annotation with a target field name:
+For PostgreSQL entities, use the `@Encrypted` annotation:
 
 ```kotlin
 @Entity
 @Table(name = "users")
 data class User(
-    @Transient @Encrypted("firstNameEncrypted") val firstName: String?,
-    @Encrypted("ssnEncrypted") val ssn: String?,
+    @Transient @Encrypted val firstName: String?,
+    @Transient @Encrypted(lazy = false) val lastName: String?,
+    @Encrypted val ssn: String?,
     val firstNameEncrypted: ByteArray? = null,
+    val lastNameEncrypted: ByteArray? = null,
     val ssnEncrypted: ByteArray? = null,
 ) : AbstractPersistable<Long>() {
-    constructor() : this(null, null)
+    constructor() : this(null, null, null)
 }
 ```
 
 **Key Points:**
 - Use `@Transient` for the original field to prevent Hibernate from persisting it
 - Create a separate field to store the encrypted data (e.g., `firstNameEncrypted`)
-- Specify the encrypted field name in the annotation
+- The `encryptedFieldName` parameter is optional - it defaults to `"${fieldName}Encrypted"`
+- By default, `lazy = true` (decryption only happens when the field is accessed)
+- Set `lazy = false` for automatic decryption on entity load
 
 ### 3. MongoDB Documents
 
@@ -151,8 +158,11 @@ interface CardRepository : CrudRepository<Card, ObjectId>, QueryByExampleExecuto
 
 - Uses a custom `EncryptionInterceptor` that implements Hibernate's `Interceptor` interface
 - Automatically encrypts fields marked with `@Encrypted` during `onPersist()`
-- Automatically decrypts fields during `onLoad()`
+- By default, fields use lazy decryption (only decrypted when accessed)
+- Set `lazy = false` for automatic decryption during `onLoad()`
 - Stores encrypted data as `ByteArray` in the database
+- **Lazy Decryption**: Fields are only decrypted when accessed via getter methods (default behavior)
+- Uses ByteBuddy to create proxy classes for lazy decryption functionality
 
 ### MongoDB Integration
 
@@ -224,5 +234,5 @@ fun `test mongo`() {
 
 ## Limitations
 
-- Lazy decryption of fields is not supported
+- Lazy decryption is only supported for Hibernate/JPA entities (not MongoDB)
 - MongoDB field renaming support is planned but not yet implemented

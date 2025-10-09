@@ -18,7 +18,6 @@ import kotlin.reflect.jvm.javaField
 class GenericEncryptionListener(
     private val encryptionService: EncryptionService,
 ) {
-
     @EventListener
     fun beforeSave(event: BeforeSaveEvent<Any>) {
         if (event.document != null) {
@@ -33,7 +32,12 @@ class GenericEncryptionListener(
         }
     }
 
-    private fun encryptDocument(document: Document, entity: Any, path: String = "$", encryptedPaths: MutableList<String> = mutableListOf()) {
+    private fun encryptDocument(
+        document: Document,
+        entity: Any,
+        path: String = "$",
+        encryptedPaths: MutableList<String> = mutableListOf(),
+    ) {
         for (prop in entity::class.memberProperties) {
             val shouldEncrypt = prop.javaField?.getAnnotation(Encrypted::class.java) != null
             val currentPath = if (path.isEmpty()) prop.name else "$path.${prop.name}"
@@ -62,7 +66,12 @@ class GenericEncryptionListener(
         }
     }
 
-    private fun encryptList(list: List<*>, entity: List<*>, path: String, encryptedPaths: MutableList<String>) {
+    private fun encryptList(
+        list: List<*>,
+        entity: List<*>,
+        path: String,
+        encryptedPaths: MutableList<String>,
+    ) {
         list.forEachIndexed { index, it ->
             val currentPath = "$path[$index]"
             when (it) {
@@ -72,7 +81,13 @@ class GenericEncryptionListener(
         }
     }
 
-    private fun encryptFieldIfRequired(document: Document, entity: Any, prop: KProperty<*>, path: String, encryptedPaths: MutableList<String>) {
+    private fun encryptFieldIfRequired(
+        document: Document,
+        entity: Any,
+        prop: KProperty<*>,
+        path: String,
+        encryptedPaths: MutableList<String>,
+    ) {
         val annotation = prop.javaField?.getAnnotation(Encrypted::class.java) ?: return
         val targetField = annotation.encryptedFieldName.ifEmpty { prop.name }
         val targetValue = (prop.getter.call(entity) as? String) ?: return
@@ -82,7 +97,10 @@ class GenericEncryptionListener(
         encryptedPaths.add("$path.$targetField")
     }
 
-    private fun decryptDocument(document: Document, entity: Class<*>) {
+    private fun decryptDocument(
+        document: Document,
+        entity: Class<*>,
+    ) {
         val kClass = entity.kotlin
         for (prop in kClass.memberProperties) {
             if (document[prop.name] is Document) {
@@ -92,7 +110,13 @@ class GenericEncryptionListener(
             }
             if (document[prop.name] is List<*>) {
                 @Suppress("UNCHECKED_CAST")
-                val listType = (prop.returnType.arguments.first().type!!.classifier as KClass<Any>).java
+                val listType =
+                    (
+                        prop.returnType.arguments
+                            .first()
+                            .type!!
+                            .classifier as KClass<Any>
+                    ).java
                 decryptList(document[prop.name] as List<*>, listType)
                 continue
             }
@@ -103,7 +127,10 @@ class GenericEncryptionListener(
         println("Hey")
     }
 
-    private fun decryptFieldIfRequired(document: Document, prop: KProperty<*>) {
+    private fun decryptFieldIfRequired(
+        document: Document,
+        prop: KProperty<*>,
+    ) {
         val annotation = prop.javaField?.getAnnotation(Encrypted::class.java) ?: return
         val targetField = annotation.encryptedFieldName.ifEmpty { prop.name }
 
@@ -113,7 +140,10 @@ class GenericEncryptionListener(
         document[prop.name] = decrypted
     }
 
-    private fun decryptList(list: List<*>, listEntity: Class<*>) {
+    private fun decryptList(
+        list: List<*>,
+        listEntity: Class<*>,
+    ) {
         list.forEachIndexed { index, it ->
             when (it) {
                 is Document -> {

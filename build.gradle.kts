@@ -1,6 +1,6 @@
 plugins {
-    kotlin("jvm") version "1.9.25"
-    kotlin("plugin.spring") version "1.9.25"
+    kotlin("jvm") version "2.2.20"
+    kotlin("plugin.spring") version "2.2.20"
     id("org.springframework.boot") version "3.5.6"
     id("io.spring.dependency-management") version "1.1.7"
     id("com.diffplug.spotless") version "7.2.1"
@@ -30,12 +30,12 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
 
     implementation("org.springframework.boot:spring-boot-starter-data-mongodb")
-    // implementation("software.amazon.awssdk:kms:2.20.0")
+    implementation("net.bytebuddy:byte-buddy:1.17.7")
 
     runtimeOnly("org.postgresql:postgresql")
 
+    testImplementation("org.mockito.kotlin:mockito-kotlin:6.1.0")
     testImplementation("org.springframework.boot:spring-boot-starter-test")
-    testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
@@ -52,7 +52,7 @@ tasks.withType<Test> {
 spotless {
     kotlin {
         target("src/**/*.kt")
-        ktlint("0.50.0")
+        ktlint("1.7.1")
     }
     java {
         target("src/**/*.java")

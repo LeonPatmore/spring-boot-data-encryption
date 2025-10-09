@@ -7,19 +7,15 @@ import org.springframework.context.annotation.Configuration
 
 @Configuration
 class HibernateEncryptionConfig {
+    @Bean
+    fun encryptionInterceptor(encryptionService: EncryptionService): EncryptionInterceptor = EncryptionInterceptor(encryptionService)
 
     @Bean
-    fun encryptionInterceptor(encryptionService: EncryptionService): EncryptionInterceptor {
-        return EncryptionInterceptor(encryptionService)
-    }
-
-    @Bean
-    fun hibernatePropertiesCustomizer(interceptor: EncryptionInterceptor): HibernatePropertiesCustomizer {
-        return HibernatePropertiesCustomizer { props: MutableMap<String?, Any?>? ->
+    fun hibernatePropertiesCustomizer(interceptor: EncryptionInterceptor): HibernatePropertiesCustomizer =
+        HibernatePropertiesCustomizer { props: MutableMap<String?, Any?>? ->
             props!!.put(
                 "hibernate.session_factory.interceptor",
                 interceptor,
             )
         }
-    }
 }
