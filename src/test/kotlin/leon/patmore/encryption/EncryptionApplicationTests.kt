@@ -8,8 +8,10 @@ import leon.patmore.encryption.mongo.CardRepository
 import leon.patmore.encryption.mongo.Pin
 import org.bson.types.ObjectId
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.mockito.kotlin.any
+import org.mockito.kotlin.doAnswer
 import org.mockito.kotlin.never
 import org.mockito.kotlin.times
 import org.mockito.kotlin.verify
@@ -38,23 +40,39 @@ class EncryptionApplicationTests {
     @MockitoSpyBean
     private lateinit var encryptionService: EncryptionService
 
+    private val decryptResponses = mutableListOf<String>()
+
+    @BeforeEach
+    fun setUp() {
+        decryptResponses.clear()
+        doAnswer { invocation ->
+            val result = invocation.callRealMethod()
+            decryptResponses.add((result as ByteArray).decodeToString())
+            result
+        }.`when`(encryptionService).decrypt(any())
+    }
+
     @Test
     fun `test postgresql`() {
-        val user = repository.save(User("Leon", "abc123"))
+        val user = repository.save(User("Leon", "Patmore", "abc123"))
 
         val foundUser = repository.findById(user.id!!).get()
-        verify(
-            encryptionService,
-            never(),
-        ).decrypt(any())
+        // Last name is not lazy, so should be decrypted immediately. Nothing else should be decrypted yet.
+        assertEquals(listOf("Patmore"), decryptResponses)
 
         assertEquals(user.ssn, foundUser.ssn)
         assertEquals(user.firstName, foundUser.firstName)
 
-        verify(
-            encryptionService,
-            times(1),
-        ).decrypt(any())
+        // First name has now been accessed, so should be in the list.
+        assertEquals(listOf("Patmore", "Leon"), decryptResponses)
+
+        repeat(5) {
+            assertEquals(user.firstName, foundUser.firstName)
+            assertEquals(user.lastName, foundUser.lastName)
+        }
+
+        // We should only decrypt each field once.
+        assertEquals(listOf("Patmore", "Leon"), decryptResponses)
     }
 
     @Test

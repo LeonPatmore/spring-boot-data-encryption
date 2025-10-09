@@ -21,12 +21,10 @@ class LazyDecryptInterceptor(
     ): Any? {
         val fieldName = method.name.removePrefix("get").replaceFirstChar { it.lowercaseChar() }
 
-        // Already cached?
         if (cache.containsKey(fieldName)) {
             return cache[fieldName]
         }
 
-        // Call the real getter (will just return null or the already-set plaintext)
         val value = superCall.call()
 
         if (value != null) {
@@ -34,12 +32,11 @@ class LazyDecryptInterceptor(
             return value
         }
 
-        // Find the encrypted field from annotation
         val realClass = realClass(obj)
         val field = realClass.declaredFields.firstOrNull { it.name == fieldName }
         val annotation = field?.getAnnotation(Encrypted::class.java)
         if (annotation != null) {
-            val encryptedField = realClass.getDeclaredField(annotation.encryptedFieldName)
+            val encryptedField = realClass.getDeclaredField(annotation.encryptedFieldName.ifEmpty { "${fieldName}Encrypted" })
             encryptedField.isAccessible = true
             val encryptedData = encryptedField.get(obj) as? ByteArray
             if (encryptedData != null) {

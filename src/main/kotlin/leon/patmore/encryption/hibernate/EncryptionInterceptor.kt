@@ -56,10 +56,7 @@ class EncryptionInterceptor(
         val kClass = entity::class
         for (prop in kClass.memberProperties) {
             val annotation = prop.javaField?.getAnnotation(Encrypted::class.java) ?: continue
-            val targetField = annotation.encryptedFieldName
-            if (targetField.isEmpty()) {
-                throw Exception("Target field required")
-            }
+            val targetField = annotation.encryptedFieldName.ifEmpty { "${prop.name}Encrypted" }
 
             val targetValue = (prop.getter.call(entity) as? String) ?: continue
 
@@ -87,7 +84,12 @@ class EncryptionInterceptor(
 
         for (prop in kClass.memberProperties) {
             val annotation = prop.javaField?.getAnnotation(Encrypted::class.java) ?: continue
-            val targetField = annotation.encryptedFieldName
+
+            if (annotation.lazy) {
+                continue
+            }
+
+            val targetField = annotation.encryptedFieldName.ifEmpty { "${prop.name}Encrypted" }
 
             val encryptedIndex = propertyNames.indexOf(targetField)
             if (encryptedIndex >= 0) {
